@@ -10,8 +10,8 @@
 		"labels":["RBC"]
 	},
 	"train":{
-		"train_image_folder":"datasets/JPEGImages/",
-		"train_annot_folder":"datasets/Annotations/",
+		"train_image_folder":"RBC_datasets/JPEGImages/",
+		"train_annot_folder":"RBC_datasets/Annotations/",
 
 
 		"train_times":1,
