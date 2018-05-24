@@ -70,7 +70,7 @@ class YOLO(object):
 
     """adjust ground truth"""
     true_box_xy=y_true[...,0:2]
-    true_box_wh=y_true[...,:2:4]
+    true_box_wh=y_true[...,2:4]
 
     ##assign the iou area as the true confidence
     true_wh_half=true_box_wh/2.
