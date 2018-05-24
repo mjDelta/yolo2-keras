@@ -5,6 +5,7 @@ from keras.layers import Input,Conv2D,Lambda,Reshape
 from keras.models import Model
 from keras.utils import multi_gpu_model
 from preprocessing import BatchGenerator
+from keras.callbacks import EarlyStopping,ModelCheckpoint
 
 class YOLO(object):
   def __init__(self,architecture,
@@ -83,7 +84,7 @@ class YOLO(object):
     intersect_mins=tf.maximum(pred_mins,true_mins)
     intersect_maxs=tf.minimum(pred_maxs,true_maxs)
     intersect_wh=tf.maximum(intersect_maxs-intersect_mins,0)
-    intersect_areas=intersect_wh[...,0]*intersect_wh[...,:1]
+    intersect_areas=intersect_wh[...,0]*intersect_wh[...,1]
 
     true_areas=true_box_wh[...,0]*true_box_wh[...,1]
     pred_areas=pred_box_wh[...,0]*pred_box_wh[...,1]
@@ -178,9 +179,21 @@ class YOLO(object):
         }
 
     train_generator=BatchGenerator(train_imgs,generator_config,norm=self.feature_extractor.normalize)
+    
+    valid_generator=BatchGenerator(valid_imgs,generator_config,norm=self.feature_extractor.normalize)
+    
+    self.model.compile(loss=self.custom_loss,optimizer="adam")
+    
+    early_stopping=EarlyStopping(monitor="val_loss",patience=5,mode="min",verbose=1)
+    checkpoint=ModelCheckpoint(saved_weights_name,monitor="val_loss",verbose=1,save_best_only=True,mode="min")
+    
+    self.model.fit_generator(generator=train_generator,
+                             steps_per_epoch=len(train_generator)*train_times,
+                             epochs=nb_epochs,
+                             validation_data=valid_generator,
+                             validation_steps=len(valid_generator)*valid_times,
+                             callbacks=[early_stopping,checkpoint])
 
-    [x,b],y=train_generator.__getitem__(0)
-    return [x,b],y
 
 
 if __name__=="__main__":
