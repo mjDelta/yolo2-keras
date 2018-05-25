@@ -6,7 +6,8 @@ from keras.models import Model
 from keras.utils import multi_gpu_model
 from preprocessing import BatchGenerator
 from keras.callbacks import EarlyStopping,ModelCheckpoint
-
+import cv2
+from utils import decode_netout
 class YOLO(object):
   def __init__(self,architecture,
                input_size,
@@ -193,7 +194,19 @@ class YOLO(object):
                              validation_data=valid_generator,
                              validation_steps=len(valid_generator)*valid_times,
                              callbacks=[early_stopping,checkpoint])
-
+  def predict(self,img):
+    img=cv2.resize(img,(self.input_size,self.input_size))
+    img=self.feature_extractor.normalize(img)
+    
+    input_img=img[:,:,::-1]
+    input_img=np.expand_dims(input_img,0)
+    dummy_array=np.zeros((1,1,1,1,self.max_box_per_img,4))
+    
+    netout=self.model.predict([input_img,dummy_array])[0]
+    boxes=decode_netout(netout,obj_th=0.3,nms_th=0.4,self.anchors,self.nb_class)
+    
+    return boxes
+    
 
 
 if __name__=="__main__":
