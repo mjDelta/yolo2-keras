@@ -23,7 +23,7 @@
 
 		"object_scale":5.0,
 		"no_object_scale":1.0,
-		"coor_scale":1.0,
+		"coord_scale":1.0,
 		"class_scale":1.0,
 
 		"saved_weights_name":"models/tiny_yolo.h5",
