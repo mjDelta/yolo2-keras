@@ -1,7 +1,7 @@
 import numpy as np
+import cv2
 
-class BndBox:
-	
+class BndBox:	
   def __init__(self,x,y,w,h,c=None,classes=None):
     self.x=x
     self.y=y
@@ -21,7 +21,7 @@ class BndBox:
 
   def get_score(self):
     if self.score==-1:
-      self.score=self.classes[self.get_label]
+      self.score=self.classes[self.get_label()]
     return self.score
 
 def bbox_iou(box1,box2):
@@ -60,7 +60,8 @@ def softmax(x,axis=-1,t=-100):
   if np.min(x)<t:
     x=x/np.min(x)*t
   e_x=np.exp(x)
-  return e_x/e_x.sum(axis,keep_dims=True)
+
+  return e_x/e_x.sum(axis,keepdims=True)
 
 def decode_netout(netout,obj_th,nms_th,anchors,nb_class):
   grid_h,grid_w,nb_box=netout.shape[:3]
@@ -68,13 +69,14 @@ def decode_netout(netout,obj_th,nms_th,anchors,nb_class):
   ##decode the output
   netout[...,4]=sigmoid(netout[...,4])
   netout[...,5:]=netout[...,4][...,np.newaxis]*softmax(netout[...,5:])
+#  netout[...,5:]=softmax(netout[...,5:]*netout[...,4][...,np.newaxis])
   netout[...,5:]*=netout[...,5:]>obj_th
   
   for row in range(grid_h):
     for col in range(grid_w):
       for b in range(nb_box):
         classes=netout[row,col,b,5:]
-        
+        print(np.sum(classes))
         if np.sum(classes)>0:
           x,y,w,h=netout[row,col,b,:4]
           
@@ -86,6 +88,7 @@ def decode_netout(netout,obj_th,nms_th,anchors,nb_class):
           
           box=BndBox(x,y,w,h,confidence,classes)
           boxes.append(box)
+#  print(len(boxes))
   for c in range(nb_class):
     sorted_indices=list(reversed(np.argsort([box.classes[c] for box in boxes])))
     
@@ -101,6 +104,27 @@ def decode_netout(netout,obj_th,nms_th,anchors,nb_class):
             boxes[index_j].classes[c]=0
   boxes=[box for box in boxes if box.get_score()>obj_th]
   return boxes
+
+def draw_boxes(boxes,img,labels):
+  h,w,c=img.shape
+#  print(img.shape)
+  for box in boxes:
+    xmin=box.x-box.w/2;xmin=int(xmin*w)
+    xmax=box.x+box.w/2;xmax=int(xmax*w)
+    ymin=box.y-box.h/2;ymin=int(ymin*h)
+    ymax=box.y+box.h/2;ymax=int(ymax*h)
+#    print(box.x,box.y,box.w,box.h)
+#    print(xmin,xmax,ymin,ymax)
+    cv2.rectangle(img,(xmin,ymin),(xmax,ymax),(255,0,0),2)
+    cv2.putText(img,
+                labels[box.get_label()]+" "+str(box.get_score()),
+                (xmin,ymin-13),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1e-3*h,
+                (255,0,0),
+                2)
+  return img
+
 if __name__=="__main__":
   a=BndBox(30,30,40,40)
   b=BndBox(45,45,50,50)
