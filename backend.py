@@ -2,6 +2,7 @@ from keras.layers import Input,BatchNormalization,Conv2D,MaxPooling2D,Lambda
 from keras.models import Model
 import tensorflow as tf
 
+ALPHA=0.25
 ##add leakyrelu from https://github.com/tensorflow/tensorflow/issues/4079, for saving memory
 def lrelu(x,alpha=0.1,name="lrelu"):
   with tf.variable_scope(name):
@@ -31,27 +32,27 @@ class TinyYolo(BaseFeatureExtractor):
     input_=Input(shape=(input_size,input_size,3))
     
     #Layer 1
-    x=Conv2D(16,(3,3),padding="same",use_bias=False)(input_)
+    x=Conv2D(int(ALPHA*16),(3,3),padding="same",use_bias=False)(input_)
     x=BatchNormalization()(x)
     x=my_lrelu_layer(x)
     x=MaxPooling2D()(x)
 
     #Layer 2-5
     for i in range(4):
-      x=Conv2D(32*(2**i),(3,3),padding="same",use_bias=False)(x)
+      x=Conv2D(int(ALPHA*32*(2**i)),(3,3),padding="same",use_bias=False)(x)
       x=BatchNormalization()(x)
       x=my_lrelu_layer(x)
       x=MaxPooling2D()(x)
 
     #Layer 6
-    x=Conv2D(512,(3,3),padding="same",use_bias=False)(x)
+    x=Conv2D(int(ALPHA*512),(3,3),padding="same",use_bias=False)(x)
     x=BatchNormalization()(x)
     x=my_lrelu_layer(x)
     x=MaxPooling2D(strides=(1,1),padding="same")(x)
 
     #Layer 7-8
     for i in range(2):
-      x=Conv2D(1024,(3,3),padding="same",use_bias=False)(x)
+      x=Conv2D(int(ALPHA*1024),(3,3),padding="same",use_bias=False)(x)
       x=BatchNormalization()(x)
       x=my_lrelu_layer(x)
 
