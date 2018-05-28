@@ -194,6 +194,10 @@ class YOLO(object):
                              validation_data=valid_generator,
                              validation_steps=len(valid_generator)*valid_times,
                              callbacks=[early_stopping,checkpoint])
+    
+  def load_weights(self,weights_path):
+    self.model.load_weights(weights_path)
+    
   def predict(self,img):
     img=cv2.resize(img,(self.input_size,self.input_size))
     img=self.feature_extractor.normalize(img)
