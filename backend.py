@@ -2,7 +2,8 @@ from keras.layers import Input,BatchNormalization,Conv2D,MaxPooling2D,Lambda
 from keras.models import Model
 import tensorflow as tf
 
-ALPHA=0.25
+ALPHA=1.0
+TINY_YOLO_WEIGHTS="models/tiny_yolo_backend.h5"
 ##add leakyrelu from https://github.com/tensorflow/tensorflow/issues/4079, for saving memory
 def lrelu(x,alpha=0.1,name="lrelu"):
   with tf.variable_scope(name):
@@ -55,8 +56,10 @@ class TinyYolo(BaseFeatureExtractor):
       x=Conv2D(int(ALPHA*1024),(3,3),padding="same",use_bias=False)(x)
       x=BatchNormalization()(x)
       x=my_lrelu_layer(x)
-
+    
     self.feature_extractor=Model(input_,x)
+    self.feature_extractor.load_weights(TINY_YOLO_WEIGHTS)
+    print("load weights from "+TINY_YOLO_WEIGHTS)
   def normalize(self,img):
     return img/255.
 
