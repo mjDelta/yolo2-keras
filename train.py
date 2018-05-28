@@ -45,7 +45,7 @@ def parse_config(args):
 
   #################################train model###################################
 
-  [x,b],y=yolo.train(
+  yolo.train(
       train_imgs,
       valid_imgs,
       config["train"]["train_times"],
