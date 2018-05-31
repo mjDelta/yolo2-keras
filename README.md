@@ -9,3 +9,4 @@
 Please run ```train.ipynb```
 
 ## Load my model to detect Red Blood Cell
+Please run ```load_model.ipynb```
