@@ -167,7 +167,8 @@ class YOLO(object):
             no_object_scale,
             coord_scale,
             class_scale,
-            saved_weights_name="best_weights.h5"):
+            saved_weights_name="best_weights.h5",
+            train=True):
     self.batch_size=batch_size
     self.object_scale=object_scale
     self.no_object_scale=no_object_scale
@@ -196,7 +197,8 @@ class YOLO(object):
     early_stopping=EarlyStopping(monitor="loss",patience=5,mode="min",verbose=1)
     checkpoint=ModelCheckpoint(saved_weights_name,monitor="loss",verbose=1,save_best_only=True,mode="min")
     
-    self.model.fit_generator(generator=train_generator,
+    if train:
+      self.model.fit_generator(generator=train_generator,
                              steps_per_epoch=len(train_generator)*train_times,
                              epochs=nb_epochs,
                              validation_data=valid_generator,
@@ -215,12 +217,32 @@ class YOLO(object):
     dummy_array=np.zeros((1,1,1,1,self.max_box_per_img,4))
     
     netout=self.model.predict([input_img,dummy_array])[0]
-    boxes=decode_netout(netout,0.3,0.4,self.anchors,self.nb_class)
+    boxes=decode_netout(netout,0.515,0.4,self.anchors,self.nb_class)
     
     return boxes
     
-
-
+  def compute_loss(self,train_imgs):
+    generator_config={
+        "IMAGE_H":self.input_size,
+        "IMAGE_W":self.input_size,
+        "GRID_H":self.grid_h,
+        "GRID_W":self.grid_w,
+        "BOX":self.nb_box,
+        "LABELS":self.labels,
+        "CLASS":len(self.labels),
+        "ANCHORS":self.anchors,
+        "BATCH_SIZE":self.batch_size,
+        "TRUE_BOX_BUFFER":self.max_box_per_img
+        }
+    train_generator=BatchGenerator(train_imgs,generator_config,norm=self.feature_extractor.normalize)
+    [x,b],y=train_generator.__getitem__(0)
+    test_x=x[0];test_b=b[0];test_y=y[0]
+    from matplotlib import pyplot as plt
+    plt.imshow(test_x)
+    plt.show()
+    print(self.model.evaluate([np.expand_dims(test_x,0),np.expand_dims(test_b,0)],np.expand_dims(test_y,0)))
+    return [test_x,test_b],test_y
+    
 if __name__=="__main__":
   yolo=YOLO("Tiny Yolo",416,["RBC"],10,[0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828])
   print(yolo.model.summary())
