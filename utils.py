@@ -76,7 +76,7 @@ def decode_netout(netout,obj_th,nms_th,anchors,nb_class):
     for col in range(grid_w):
       for b in range(nb_box):
         classes=netout[row,col,b,5:]
-        print(np.sum(classes))
+        #print(np.sum(classes))
         if np.sum(classes)>0:
           x,y,w,h=netout[row,col,b,:4]
           
@@ -117,8 +117,8 @@ def draw_boxes(boxes,img,labels):
 #    print(xmin,xmax,ymin,ymax)
     cv2.rectangle(img,(xmin,ymin),(xmax,ymax),(255,0,0),2)
     cv2.putText(img,
-                labels[box.get_label()]+" "+str(box.get_score()),
-                (xmin,ymin-13),
+                labels[box.get_label()]+" "+str(round(box.get_score(),2)),
+                (xmin,ymin+13),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1e-3*h,
                 (255,0,0),
