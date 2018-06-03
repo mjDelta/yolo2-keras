@@ -17,7 +17,10 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 argparser=argparse.ArgumentParser()
 argparser.add_argument("-c","--conf",help="configuration file path")
 argparser.add_argument("-w","--weights",help="weights file path")
-
+out_dir="output/"
+if not os.path.exists(out_dir):
+  os.makedirs(out_dir)
+	
 def test(argparser,test_path):
   args=argparser.parse_args()
   config_path=args.conf
@@ -42,9 +45,9 @@ def test(argparser,test_path):
       img=cv2.imread(f_path)
       boxes=yolo.predict(img)
       img=draw_boxes(boxes,img,config["model"]["labels"])
-      cv2.imwrite(f_path[-9:],img)
-      break
-#      plt.imshow(img)
-#      plt.show()
+      cv2.imwrite(out_dir+f_path[-9:],img)
 
+      #plt.imshow(img)
+      #plt.show()
+      #break
 test(argparser,test_path="RBC_datasets/JPEGImages/")
