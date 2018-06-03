@@ -1,4 +1,4 @@
-from backend import TinyYolo
+from backend import TinyYolo,FullYolo
 import numpy as np
 import tensorflow as tf
 from keras.layers import Input,Conv2D,Lambda,Reshape,BatchNormalization,Activation
@@ -25,12 +25,14 @@ class YOLO(object):
     self.max_box_per_img=max_box_per_img
 
     ##Define model with cpu
-    with tf.device("/cpu:0"):
+    with tf.device("/gpu:0"):
       input_=Input(shape=(self.input_size,self.input_size,3))
       self.true_boxes=Input(shape=(1,1,1,self.max_box_per_img,4))
 
       if architecture=="Tiny Yolo":
         self.feature_extractor=TinyYolo(self.input_size)
+      elif architecture=="Full Yolo":
+        self.feature_extractor=FullYolo(self.input_size)        
       else:
         raise Exception("Architecture not found...")
 
@@ -194,7 +196,7 @@ class YOLO(object):
     
     self.model.compile(loss=self.custom_loss,optimizer="adam")
     
-    early_stopping=EarlyStopping(monitor="loss",patience=5,mode="min",verbose=1)
+    early_stopping=EarlyStopping(monitor="loss",patience=3,mode="min",verbose=1)
     checkpoint=ModelCheckpoint(saved_weights_name,monitor="loss",verbose=1,save_best_only=True,mode="min")
     
     if train:
@@ -217,7 +219,7 @@ class YOLO(object):
     dummy_array=np.zeros((1,1,1,1,self.max_box_per_img,4))
     
     netout=self.model.predict([input_img,dummy_array])[0]
-    boxes=decode_netout(netout,0.515,0.4,self.anchors,self.nb_class)
+    boxes=decode_netout(netout,0.5,0.4,self.anchors,self.nb_class)
     
     return boxes
     
@@ -236,11 +238,21 @@ class YOLO(object):
         }
     train_generator=BatchGenerator(train_imgs,generator_config,norm=self.feature_extractor.normalize)
     [x,b],y=train_generator.__getitem__(0)
-    test_x=x[0];test_b=b[0];test_y=y[0]
-    from matplotlib import pyplot as plt
-    plt.imshow(test_x)
-    plt.show()
-    print(self.model.evaluate([np.expand_dims(test_x,0),np.expand_dims(test_b,0)],np.expand_dims(test_y,0)))
+    print("The first batch loss is "+str(self.model.evaluate([x,b],y,batch_size=self.batch_size)))
+    print(self.batch_size)
+    sum_l=0.
+    for i in range(len(x)):
+        
+        test_x=x[i];test_b=b[i];test_y=y[i]
+        from matplotlib import pyplot as plt
+        
+        l=self.model.evaluate([np.expand_dims(test_x,0),np.expand_dims(test_b,0)],\
+                                      np.expand_dims(test_y,0),batch_size=1)
+        print("The first img loss is "+str(l))
+        sum_l+=l
+    print(sum_l)
+    #plt.imshow(test_x)
+    #plt.show()    
     return [test_x,test_b],test_y
     
 if __name__=="__main__":
