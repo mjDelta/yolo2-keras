@@ -10,4 +10,4 @@ Please run ```train.ipynb```
 
 ## Load my model to detect Red Blood Cell
 Please run ```load_model.ipynb```</br>
-![Image text](https://github.com/mjDelta/yolo2-keras/blob/master/output/00000.jpg)
+![Image text](https://github.com/mjDelta/yolo2-keras/blob/master/output/00009.jpg)
